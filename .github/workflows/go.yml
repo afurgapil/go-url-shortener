@@ -1,25 +1,7 @@
-name: Go
-
-on:
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-
 jobs:
   build:
     name: Build and Test
     runs-on: ubuntu-latest
-
-    services:
-      mysql:
-        image: mysql:latest
-        ports:
-          - 3306:3306
-        env:
-          MYSQL_ROOT_PASSWORD: root
-          MYSQL_DATABASE: testdb
-        options: --health-cmd="mysqladmin ping" --health-interval=10s --health-timeout=5s --health-retries=3
 
     steps:
       - name: Set up Go 1.x
@@ -37,13 +19,9 @@ jobs:
       - name: Build
         run: go build -v ./...
 
-      - name: Wait for MySQL to start
+      - name: Start MySQL server
         run: |
-          dockerize -wait tcp://localhost:3306 -timeout 1m
-
-      - name: Initialize database schema
-        run: |
-          mysql -h localhost -u root -proot -e "CREATE TABLE urls (id INT AUTO_INCREMENT PRIMARY KEY, long_url VARCHAR(255), short_url VARCHAR(255), usage_count INT DEFAULT 0, pass_key VARCHAR(32));"
+          dockerize -wait tcp://localhost:3306 -timeout 1m docker run -d --name mysql-server -p 3306:3306 -e MYSQL_ROOT_PASSWORD=password mysql:latest
 
       - name: Test
         run: go test -v ./test/...
