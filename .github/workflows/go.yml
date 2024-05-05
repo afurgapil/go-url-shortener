@@ -1,37 +1,54 @@
-name: Go-url-shortener
+name: Go
 
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+
 jobs:
   build:
     name: Build and Test
     runs-on: ubuntu-latest
 
+    services:
+      mysql:
+        image: mysql:latest
+        env:
+          MYSQL_ROOT_PASSWORD: password
+          MYSQL_DATABASE: test_database
+        ports:
+          - 3306:3306
+
     steps:
       - name: Set up Go 1.x
         uses: actions/setup-go@v2
         with:
-          go-version: "^1.22.2"
+          go-version: "^1.17"
 
       - name: Check out code into the Go module directory
         uses: actions/checkout@v2
 
+      - name: Wait for MySQL to start
+        run: |
+          i=0
+          until [ $i -ge 30 ]
+          do
+            nc -z localhost 3306 && break
+            i=$((i+1))
+            sleep 1
+          done
+          if [ $i -ge 30 ]; then exit 1; fi
+
       - name: Get dependencies
         run: |
-          go get -v -t -d ./...
+          go mod download
 
       - name: Build
         run: go build -v ./...
 
-      - name: Start MySQL server
-        run: |
-          dockerize -wait tcp://localhost:3306 -timeout 1m docker run -d --name mysql-server -p 3306:3306 -e MYSQL_ROOT_PASSWORD=password mysql:latest
-
       - name: Test
-        run: go test -v ./test/...
+        run: go test -v ./...
 
       - name: Cache Go Modules
         uses: actions/cache@v2
