@@ -27,6 +27,4 @@ testdata/postgres
 ./air.sh
 *.toml
 
-# Envoriament
-*.env
 
