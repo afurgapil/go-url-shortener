@@ -1,0 +1,159 @@
+openapi: "3.0.0"
+info:
+  title: "URL Shortener API"
+  version: "1.0.0"
+  description: "API for creating, deleting, updating, and logging URL shortenings."
+servers:
+  - url: "http://localhost:8080"
+    description: "Development server"
+
+paths:
+  /short:
+    post:
+      summary: "Create a short URL"
+      operationId: "createShortUrl"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - long_url
+              properties:
+                long_url:
+                  type: string
+                  format: uri
+                  example: "https://example.com/reallyverylongurl"
+                  description: "The original URL to shorten."
+      responses:
+        "200":
+          description: "Short URL created successfully."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: integer
+                    example: 9
+                  short_url:
+                    type: string
+                    format: uri
+                    example: "https://example.com/6CNQXY"
+        "400":
+          description: "Invalid JSON body."
+        "405":
+          description: "Invalid HTTP Method. Only POST is allowed."
+
+  /delete/{short_url}/{pass_key}:
+    delete:
+      summary: "Delete a short URL"
+      operationId: "deleteShortUrl"
+      parameters:
+        - name: "short_url"
+          in: "path"
+          required: true
+          schema:
+            type: string
+          description: "The shortened part of the URL to delete."
+        - name: "pass_key"
+          in: "path"
+          required: true
+          schema:
+            type: string
+          description: "The pass key to authorize the deletion."
+      responses:
+        "200":
+          description: "Short URL deleted successfully."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+        "400":
+          description: "Missing parameter."
+        "401":
+          description: "Unauthorized. Invalid pass key."
+        "405":
+          description: "Invalid HTTP Method. Only DELETE is allowed."
+
+  /update:
+    patch:
+      summary: "Update an existing short URL"
+      operationId: "updateShortUrl"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - shortURL
+                - newLongURL
+                - passKey
+              properties:
+                shortURL:
+                  type: string
+                  description: "The current short URL to update."
+                newLongURL:
+                  type: string
+                  format: uri
+                  example: "https://example.com/reallyverylongurlagain"
+                  description: "The new URL to which the short URL should redirect."
+                passKey:
+                  type: string
+                  description: "Pass key for authorization."
+      responses:
+        "200":
+          description: "Short URL updated successfully."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  updatedURL:
+                    type: string
+                    format: uri
+                    example: "https://example.com/aXsvaF"
+
+        "400":
+          description: "Invalid JSON body."
+        "401":
+          description: "Unauthorized. Invalid pass key."
+        "405":
+          description: "Invalid HTTP Method. Only PATCH is allowed."
+
+  /log/{id}:
+    get:
+      summary: "Log a usage of the short URL"
+      operationId: "logUrlUsage"
+      parameters:
+        - name: "id"
+          in: "path"
+          required: true
+          schema:
+            type: string
+          description: "The short URL to log usage for."
+      responses:
+        "200":
+          description: "Usage logged successfully."
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Usage incremented"
+                  completed_url:
+                    type: string
+                    format: uri
+        "404":
+          description: "URL not found."
+        "405":
+          description: "Invalid HTTP Method. Only GET is allowed."
